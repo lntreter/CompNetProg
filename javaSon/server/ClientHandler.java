@@ -37,6 +37,8 @@ public class ClientHandler implements Runnable{
 
     }
 
+    public String messageType;
+
     @Override
     public void run() {
         // TODO Auto-generated method stub
@@ -48,11 +50,17 @@ public class ClientHandler implements Runnable{
                 messageFromClient = bufferedReader.readLine();
                 
                 System.out.println(messageFromClient);
+
+                String[] headerParts = messageFromClient.split("\\|");
+                messageType = getValueByKey(headerParts, "MessageType");
+
+                System.out.println("A " + messageType);
     
                 // Eğer dosya gönderilmişse
-                if (messageFromClient.startsWith("MessageType: FileTransfer")) {
+                if (messageType.equals("FileTransfer")) {
                     receiveFile(messageFromClient);
                 } else {
+                    System.out.println("B " + messageType);
                     broadcastMessage(messageFromClient);
                 }
             } catch (IOException e) {
@@ -62,6 +70,8 @@ public class ClientHandler implements Runnable{
         }
 
     }
+
+
     
     // try {
     //     messageFromClient = bufferedReader.readLine();
@@ -147,6 +157,7 @@ public class ClientHandler implements Runnable{
     public void broadcastMessage(String messageToSend) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
+                System.out.println("C " + messageType);
                 if (!clientHandler.clientUsername.equals(clientUsername)) {
                     clientHandler.bufferedWriter.write(messageToSend + "\n");
                     clientHandler.bufferedWriter.flush();
