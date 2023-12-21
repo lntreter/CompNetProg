@@ -3,6 +3,9 @@
 package client;
 
 import javax.swing.*;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,8 +19,11 @@ public class ClientGUI extends JFrame {
     private BufferedWriter bufferedWriter;
     private String username;
 
+    private JTextPane chatArea;
+    private StyledDocument chatAreaDoc;
+    private Style style;
     private JTextField messageField;
-    private JTextArea chatArea;
+    //private JTextArea chatArea;
     
 
     public ClientGUI(Socket socket, String username) {
@@ -70,10 +76,9 @@ public class ClientGUI extends JFrame {
         setSize(400, 400); // Increase the size of the frame
         setLayout(new BorderLayout());
 
-        chatArea = new JTextArea();
-        chatArea.setEditable(false);
-        chatArea.setLineWrap(true);
-        chatArea.setSize(200, 800);
+        chatArea = new JTextPane();
+        chatAreaDoc = chatArea.getStyledDocument();
+        style = chatArea.addStyle("Bold", null);
         JScrollPane scrollPane = new JScrollPane(chatArea);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -218,16 +223,38 @@ public class ClientGUI extends JFrame {
 
     public void appendToChatArea(String message) {
         System.out.println("Appending to chat area: " + message);
-        SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
+        SwingUtilities.invokeLater(() -> {
+            StyleConstants.setBold(style, true);
+            StyleConstants.setForeground(style, Color.blue);
+            try {
+                chatAreaDoc.insertString(chatAreaDoc.getLength(), message + "\n", style);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
     
     public void appendToChatArea(String message, boolean isClientMessage) {
         SwingUtilities.invokeLater(() -> {
             if (isClientMessage) {
 
-                chatArea.append(message + "\n");
+                StyleConstants.setBold(style, false);
+                StyleConstants.setForeground(style, Color.BLUE);
+
+                try {
+                    chatAreaDoc.insertString(chatAreaDoc.getLength(), message + "\n", style);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             } else {
-                chatArea.append(message + "\n");
+                StyleConstants.setBold(style, true);
+                StyleConstants.setForeground(style, Color.BLACK);
+
+                try {
+                    chatAreaDoc.insertString(chatAreaDoc.getLength(), message + "\n", style);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
