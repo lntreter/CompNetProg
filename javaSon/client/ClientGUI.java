@@ -38,38 +38,9 @@ public class ClientGUI extends JFrame {
         }
 
         initializeGUI();
-        startListeningForMessages();
+        startCheckingForHeader();
+        
     }
-
-    // private void initializeGUI() {
-    //     setTitle("Chat Client");
-    //     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    //     setSize(400, 300);
-    //     setLayout(new BorderLayout());
-
-    //     chatArea = new JTextArea();
-    //     chatArea.setEditable(false);
-    //     JScrollPane scrollPane = new JScrollPane(chatArea);
-    //     add(scrollPane, BorderLayout.CENTER);
-
-    //     JPanel inputPanel = new JPanel();
-    //     inputPanel.setLayout(new BorderLayout());
-
-    //     messageField = new JTextField();
-    //     inputPanel.add(messageField, BorderLayout.CENTER);
-
-    //     JButton sendButton = new JButton("Send");
-    //     sendButton.addActionListener(new ActionListener() {
-    //         @Override
-    //         public void actionPerformed(ActionEvent e) {
-    //             sendMessage();
-    //         }
-    //     });
-    //     inputPanel.add(sendButton, BorderLayout.EAST);
-
-    //     add(inputPanel, BorderLayout.SOUTH);
-    // }
-
     private void initializeGUI() {
         setTitle("Chat Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -168,33 +139,93 @@ public class ClientGUI extends JFrame {
             while ((bytesRead = fileInputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
             }
+
+            outputStream.flush();
     
             // Kapat
             fileInputStream.close();
             System.out.println("File sent: " + file.getName());
         } catch (IOException ex) {
+
             ex.printStackTrace();
+
         }
     }
 
-
-    private void startListeningForMessages() {
+    private void startCheckingForHeader(){
         new Thread(new Runnable() {
             @Override
-            public void run() {
-                String messageFromGroupChat;
+            public void run(){
+                String header;
+                System.out.println("Listening for Header...");
                 try {
+
                     while (socket.isConnected()) {
-                        messageFromGroupChat = bufferedReader.readLine();
-                        System.out.println("Received message: " + messageFromGroupChat);
-                        appendToChatArea(messageFromGroupChat, false);
+                        header = bufferedReader.readLine();
+                        if (header.startsWith("MessageType: FileTransfer")) {
+                            startlisteningForFiles(header);
+                        } else {
+                            startListeningForMessages(header);
+                        }
                     }
-                } catch (IOException e) {
+                    
+                } catch (Exception e) {
                     closeEverything();
                 }
             }
         }).start();
     }
+
+    private void startlisteningForFiles(String header) {
+        try {
+
+            while (socket.isConnected()) {
+                        
+                System.out.println("Listened Files..");
+
+                header = bufferedReader.readLine();
+                String[] headerLines = header.split("\\|");
+
+                long fileSize = headerLines[2].split(": ")[1] != null ? Long.parseLong(headerLines[2].split(": ")[1]) : 0;
+                        
+                FileOutputStream fileOutputStream = new FileOutputStream("received_" + headerLines[1].split(": ")[1]);
+
+                InputStream in = socket.getInputStream();
+                        // gelen dosyayı oku
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+
+                while (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
+                    fileOutputStream.write(buffer, 0, bytesRead);
+                    fileSize -= bytesRead;
+                }
+
+                fileOutputStream.close();
+                System.out.println("File received: " + headerLines[1].split(": ")[1]);
+
+
+            }
+
+        } catch (Exception e) {
+            closeEverything();
+        }
+    }
+    
+
+    
+
+    private void startListeningForMessages(String messageFromGroupChat) {
+        try {
+            while (socket.isConnected()) {
+                messageFromGroupChat = bufferedReader.readLine();
+                System.out.println("Received message: " + messageFromGroupChat);
+                appendToChatArea(messageFromGroupChat, false);
+            }
+        } catch (IOException e) {
+            closeEverything();
+        }
+    }
+    
 
     private void sendUserName() {
         try {
@@ -236,6 +267,7 @@ public class ClientGUI extends JFrame {
             }
         });
     }
+
     
     public void appendToChatArea(String message, boolean isClientMessage) {
         SwingUtilities.invokeLater(() -> {
@@ -284,7 +316,7 @@ public class ClientGUI extends JFrame {
             public void run() {
                 try {
                     String username = JOptionPane.showInputDialog("Enter your username for the group chat:");
-                    Socket socket = new Socket("192.46.232.242", 1234);
+                    Socket socket = new Socket("localhost", 1234);
                     ClientGUI clientGUI = new ClientGUI(socket, username);
                     clientGUI.setVisible(true);
                     clientGUI.appendToChatArea("Welcome to the group chat, " + username + "!");

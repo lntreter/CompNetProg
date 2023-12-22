@@ -4,11 +4,12 @@ package server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -18,6 +19,9 @@ public class ClientHandler implements Runnable{
     private Socket socket;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
+    private OutputStream outputStream;
+    private InputStream inputStream;
+    private PrintWriter pw;
     private String clientUsername;
 
     public ClientHandler(Socket socket, ArrayList<ClientHandler> clientHandlers) {
@@ -28,6 +32,9 @@ public class ClientHandler implements Runnable{
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.clientUsername = bufferedReader.readLine();
             this.clientHandlers = clientHandlers;
+            this.outputStream = socket.getOutputStream();
+            this.inputStream = socket.getInputStream();
+            this.pw = new PrintWriter(outputStream, true);
             clientHandlers.add(this);
             broadcastMessage("Server: " + clientUsername + " has joined the chat");
         }
@@ -58,7 +65,16 @@ public class ClientHandler implements Runnable{
     
                 // Eğer dosya gönderilmişse
                 if (messageType.equals("FileTransfer")) {
-                    receiveFile(messageFromClient);
+                    try {
+
+                        System.out.println("Z" + messageType);
+                    
+                        broadcastFile(messageFromClient);
+                        
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                 } else {
                     System.out.println("B " + messageType);
                     broadcastMessage(message);
@@ -73,44 +89,6 @@ public class ClientHandler implements Runnable{
 
 
     
-    // try {
-    //     messageFromClient = bufferedReader.readLine();
-
-    //     // Eğer dosya gönderilmişse
-    //     if (messageFromClient.startsWith("MessageType: FileTransfer")) {
-    //         receiveFile(messageFromClient);
-    //     } else {
-    //         broadcastMessage(messageFromClient);
-    //     }
-    // } catch (IOException e) {
-    //     closeEverything(socket, bufferedReader, bufferedWriter);
-    //     break;
-    // }
-
-    // private void receiveFile(String header) {
-    //     try {
-    //         // Başlık bilgilerini parçala
-    //         String[] headerLines = header.split("\n");
-    //         String fileName = headerLines[1].split(": ")[1];
-    //         long fileSize = Long.parseLong(headerLines[2].split(": ")[1]);
-
-    //         // Dosyayı al
-    //         FileOutputStream fileOutputStream = new FileOutputStream("received_" + fileName);
-    //         byte[] buffer = new byte[1024];
-    //         int bytesRead;
-    //         while (fileSize > 0 && (bytesRead = bufferedReader.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
-    //             fileOutputStream.write(buffer, 0, bytesRead);
-    //             fileSize -= bytesRead;
-    //         }
-
-    //         // Kapat
-    //         fileOutputStream.close();
-    //         System.out.println("File received: " + fileName);
-    //     } catch (IOException ex) {
-    //         ex.printStackTrace();
-    //     }
-    // }
-
     private static String getValueByKey(String[] headerParts, String key) {
         for (String part : headerParts) {
             String[] keyValue = part.split(":");
@@ -121,37 +99,32 @@ public class ClientHandler implements Runnable{
         return null;
     }
     
+    public void broadcastFile(String messageFromClient){
 
-    private void receiveFile(String header) {
-        try {
-            // Split header information
+        for (ClientHandler clientHandler : clientHandlers) {
+            try {
 
-            
-            
-            String[] headerLines = header.split("\\|");
+                System.out.println("GIRDI");
 
-            System.err.println(headerLines[0] + " " + headerLines.length);
+                clientHandler.pw.println(messageFromClient);
 
-            String fileName = getValueByKey(headerLines, "FileName");
 
-            long fileSize =  getValueByKey(headerLines, "FileSize") != null ? Long.parseLong(getValueByKey(headerLines, "FileSize")) : 0;
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while (clientHandler.inputStream.available() > 0 && (bytesRead = clientHandler.inputStream.read(buffer)) != -1) {
+                    clientHandler.outputStream.write(buffer, 0, bytesRead);
+                    System.out.println("Dosya gönderiliyor: " + bytesRead);
+                }
 
-            // Receive file
-            FileOutputStream fileOutputStream = new FileOutputStream("received_" + fileName);
-            InputStream in = socket.getInputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
-                fileOutputStream.write(buffer, 0, bytesRead);
-                fileSize -= bytesRead;
+                System.out.println("File received and sent to other clients: " + messageFromClient);
+                
+            } catch (Exception e) {
+                
+                closeEverything(socket, bufferedReader, bufferedWriter);
+
             }
-
-            // Close
-            fileOutputStream.close();
-            System.out.println("File received: " + fileName);
-        } catch (IOException ex) {
-            ex.printStackTrace();
         }
+
     }
 
     public void broadcastMessage(String messageToSend) {
