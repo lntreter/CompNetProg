@@ -37,8 +37,6 @@ public class ClientHandler implements Runnable{
 
     }
 
-    public String messageType;
-
     @Override
     public void run() {
         // TODO Auto-generated method stub
@@ -52,7 +50,9 @@ public class ClientHandler implements Runnable{
                 System.out.println(messageFromClient);
 
                 String[] headerParts = messageFromClient.split("\\|");
-                messageType = getValueByKey(headerParts, "MessageType");
+                String messageType = getValueByKey(headerParts, "MessageType");
+
+                String message = messageFromClient.split("\\|")[1];
 
                 System.out.println("A " + messageType);
     
@@ -61,7 +61,7 @@ public class ClientHandler implements Runnable{
                     receiveFile(messageFromClient);
                 } else {
                     System.out.println("B " + messageType);
-                    broadcastMessage(messageFromClient);
+                    broadcastMessage(message);
                 }
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
@@ -157,7 +157,6 @@ public class ClientHandler implements Runnable{
     public void broadcastMessage(String messageToSend) {
         for (ClientHandler clientHandler : clientHandlers) {
             try {
-                System.out.println("C " + messageType);
                 if (!clientHandler.clientUsername.equals(clientUsername)) {
                     clientHandler.bufferedWriter.write(messageToSend + "\n");
                     clientHandler.bufferedWriter.flush();
