@@ -197,7 +197,7 @@ public class ClientGUI extends JFrame {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
-                while (in.available() > 0 && (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1)) {
+                while (in.available() > 0 && (fileSize > 0 && (bytesRead = in.read(buffer)) != -1/*(bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1)*/)) {
                     fileOutputStream.write(buffer, 0, bytesRead);
                     fileSize -= bytesRead;
                     System.out.println("Dosya alınıyor: " + bytesRead);

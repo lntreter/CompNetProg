@@ -104,6 +104,8 @@ public class ClientHandler implements Runnable{
         for (ClientHandler clientHandler : clientHandlers) {
             try {
 
+                if(clientHandler == this) continue;
+
                 System.out.println("GIRDI");
 
                 clientHandler.pw.println(messageFromClient);
