@@ -162,14 +162,17 @@ public class ClientGUI extends JFrame {
 
                     while (socket.isConnected()) {
                         header = bufferedReader.readLine();
-                        if (header.startsWith("MessageType: FileTransfer")) {
+                        String headerParts = header.split("\\|")[0];
+                        System.out.println("Header: " + headerParts);
+                        if (headerParts.equals("MessageType: FileTransfer")) {
                             startlisteningForFiles(header);
                         } else {
+                            System.out.println("ZAAAA");
                             startListeningForMessages(header);
                         }
                     }
                     
-                } catch (Exception e) {
+                } catch (IOException e) {
                     closeEverything();
                 }
             }
@@ -178,12 +181,9 @@ public class ClientGUI extends JFrame {
 
     private void startlisteningForFiles(String header) {
         try {
-
-            while (socket.isConnected()) {
                         
-                System.out.println("Listened Files..");
+                System.out.println("Listening Files..");
 
-                header = bufferedReader.readLine();
                 String[] headerLines = header.split("\\|");
 
                 long fileSize = headerLines[2].split(": ")[1] != null ? Long.parseLong(headerLines[2].split(": ")[1]) : 0;
@@ -191,37 +191,40 @@ public class ClientGUI extends JFrame {
                 FileOutputStream fileOutputStream = new FileOutputStream("received_" + headerLines[1].split(": ")[1]);
 
                 InputStream in = socket.getInputStream();
-                        // gelen dosyayı oku
+                // gelen dosyayı oku
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
                 while (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
                     fileOutputStream.write(buffer, 0, bytesRead);
                     fileSize -= bytesRead;
+                    System.out.println("Dosya alınıyor: " + bytesRead);
                 }
 
                 fileOutputStream.close();
                 System.out.println("File received: " + headerLines[1].split(": ")[1]);
 
-
-            }
+            
 
         } catch (Exception e) {
             closeEverything();
         }
     }
-    
-
-    
 
     private void startListeningForMessages(String messageFromGroupChat) {
         try {
-            while (socket.isConnected()) {
-                messageFromGroupChat = bufferedReader.readLine();
+            
+            if (!messageFromGroupChat.startsWith("MessageType: FileTransfer")) {
+                
+                System.out.println("ZAAAAAAA");
                 System.out.println("Received message: " + messageFromGroupChat);
                 appendToChatArea(messageFromGroupChat, false);
+
+            } else {
+                
             }
-        } catch (IOException e) {
+        
+        } catch (Exception e) {
             closeEverything();
         }
     }
