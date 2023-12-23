@@ -145,6 +145,7 @@ public class ClientGUI extends JFrame {
             // Kapat
             fileInputStream.close();
             System.out.println("File sent: " + file.getName());
+            appendToChatArea("File sent: " + file.getName(), true);
         } catch (IOException ex) {
 
             ex.printStackTrace();
@@ -182,7 +183,8 @@ public class ClientGUI extends JFrame {
     private void startlisteningForFiles(String header) {
         try {
                         
-                System.out.println("Listening Files..");
+                
+                System.out.println(header + "Listening Files..");
 
                 String[] headerLines = header.split("\\|");
 
@@ -195,7 +197,7 @@ public class ClientGUI extends JFrame {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
-                while (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
+                while (in.available() > 0 && (fileSize > 0 && (bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1)) {
                     fileOutputStream.write(buffer, 0, bytesRead);
                     fileSize -= bytesRead;
                     System.out.println("Dosya alınıyor: " + bytesRead);
@@ -203,6 +205,7 @@ public class ClientGUI extends JFrame {
 
                 fileOutputStream.close();
                 System.out.println("File received: " + headerLines[1].split(": ")[1]);
+                appendToChatArea("File received: " + headerLines[1].split(": ")[1], true);
 
             
 
@@ -319,7 +322,7 @@ public class ClientGUI extends JFrame {
             public void run() {
                 try {
                     String username = JOptionPane.showInputDialog("Enter your username for the group chat:");
-                    Socket socket = new Socket("localhost", 1234);
+                    Socket socket = new Socket("192.46.232.242", 1234);
                     ClientGUI clientGUI = new ClientGUI(socket, username);
                     clientGUI.setVisible(true);
                     clientGUI.appendToChatArea("Welcome to the group chat, " + username + "!");
