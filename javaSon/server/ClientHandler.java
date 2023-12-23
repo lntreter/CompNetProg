@@ -111,13 +111,14 @@ public class ClientHandler implements Runnable{
                 clientHandler.pw.println(messageFromClient);
 
 
-                byte[] buffer = new byte[102400];
+                byte[] buffer = new byte[4096];
                 int bytesRead;
                 while ((bytesRead = this.inputStream.read(buffer)) != -1) {
                     clientHandler.outputStream.write(buffer, 0, bytesRead);
-                    clientHandler.outputStream.flush();
                     System.out.println("Dosya gönderiliyor: " + bytesRead);
                 }
+
+                clientHandler.outputStream.flush();
 
                 System.out.println("File received and sent to other clients: " + messageFromClient);
                 

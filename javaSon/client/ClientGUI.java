@@ -194,7 +194,7 @@ public class ClientGUI extends JFrame {
 
                 InputStream in = socket.getInputStream();
                 // gelen dosyayı oku
-                byte[] buffer = new byte[102400];
+                byte[] buffer = new byte[1024];
                 int bytesRead;
 
                 while (/*in.available() > 0 && (fileSize > 0 && */(bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
