@@ -194,13 +194,16 @@ public class ClientGUI extends JFrame {
 
                 InputStream in = socket.getInputStream();
                 // gelen dosyayı oku
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[102400];
                 int bytesRead;
 
-                while (in.available() > 0 && (fileSize > 0 && (bytesRead = in.read(buffer)) != -1/*(bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1)*/)) {
+                while (/*in.available() > 0 && (fileSize > 0 && */(bytesRead = in.read(buffer, 0, (int) Math.min(buffer.length, fileSize))) != -1) {
+                    System.out.println("Dosya alınıyor: " + bytesRead);
                     fileOutputStream.write(buffer, 0, bytesRead);
                     fileSize -= bytesRead;
-                    System.out.println("Dosya alınıyor: " + bytesRead);
+                    break;
+
+                    
                 }
 
                 fileOutputStream.close();
@@ -322,7 +325,8 @@ public class ClientGUI extends JFrame {
             public void run() {
                 try {
                     String username = JOptionPane.showInputDialog("Enter your username for the group chat:");
-                    Socket socket = new Socket("192.46.232.242", 1234);
+                    //Socket socket = new Socket("192.46.232.242", 1234);
+                    Socket socket = new Socket("localhost", 1234);
                     ClientGUI clientGUI = new ClientGUI(socket, username);
                     clientGUI.setVisible(true);
                     clientGUI.appendToChatArea("Welcome to the group chat, " + username + "!");
