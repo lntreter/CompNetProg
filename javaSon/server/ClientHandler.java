@@ -110,11 +110,15 @@ public class ClientHandler implements Runnable{
 
                 clientHandler.pw.println(messageFromClient);
 
+                
+                int fileSize = Integer.parseInt( getValueByKey(messageFromClient.split("\\|"), "FileSize"));
 
                 byte[] buffer = new byte[4096];
                 int bytesRead;
-                while ((bytesRead = this.inputStream.read(buffer)) != -1) {
+                long totalBytesRead = 0;
+                while (totalBytesRead < fileSize  && (bytesRead = this.inputStream.read(buffer)) != -1) {
                     clientHandler.outputStream.write(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
                     System.out.println("Dosya gönderiliyor: " + bytesRead);
                 }
 
