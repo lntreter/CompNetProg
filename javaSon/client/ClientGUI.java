@@ -325,8 +325,8 @@ public class ClientGUI extends JFrame {
             public void run() {
                 try {
                     String username = JOptionPane.showInputDialog("Enter your username for the group chat:");
-                    Socket socket = new Socket("192.46.232.242", 1234);
-                    //Socket socket = new Socket("localhost", 1234);
+                    //Socket socket = new Socket("192.46.232.242", 1234);
+                    Socket socket = new Socket("localhost", 1234);
                     ClientGUI clientGUI = new ClientGUI(socket, username);
                     clientGUI.setVisible(true);
                     clientGUI.appendToChatArea("Welcome to the group chat, " + username + "!");
